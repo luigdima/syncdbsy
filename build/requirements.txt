@@ -1,0 +1,4 @@
+pymssql
+prettytable
+pymysql
+schedule

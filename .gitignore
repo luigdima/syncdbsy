@@ -1,0 +1,3 @@
+/build/syncdb.env
+/src/csql/init
+**/__pycache__
