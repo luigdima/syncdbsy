@@ -8,9 +8,7 @@ services:
     volumes: 
       - ./src/:/app
     restart: always
-  sftp:
-    env_file:
-      - ./build/syncdb.env    
+  sftp: 
     depends_on:
       - app
     image: atmoz/sftp
