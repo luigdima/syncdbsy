@@ -1,9 +1,20 @@
 version: '3'
 
 services:
-    app:
-        build: ./build
-        env_file:
-            - ./build/syncdb.env
-        volumes: 
-            - ./src/:/app
+  app:
+    build: ./build
+    env_file:
+      - ./build/syncdb.env
+    volumes: 
+      - ./src/:/app
+    restart: always
+  sftp:
+    depends_on:
+      - app
+    image: atmoz/sftp
+    volumes:
+      - ./src/csql:/app/csql
+    ports:
+      - "10072:22"
+    command: ${SFTPUSER}:${SFTPPASS}:1001
+    restart: always
