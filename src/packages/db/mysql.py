@@ -10,7 +10,8 @@ class MySQL:
             'nchar': 'varchar',
             'nvarchar': 'varchar',
             'float': 'float',
-            'smallint': 'smallint'
+            'smallint': 'smallint',
+            'datetime': 'datetime'
         }
 
         if type in types:
