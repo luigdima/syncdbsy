@@ -21,7 +21,7 @@ class MySQL:
             log(__name__).critical('No se ha podido cambiar el type de MsSQL a MySQL (' + type + ')')
             sys.exit(1)
 
-    def conn(self):        
+    def conn(self):
         try:
             connection = pymysql.connect(
                 os.getenv("DB_MYSQL_SERVER"),
@@ -43,7 +43,7 @@ class MySQL:
     def drop(self,tabla):
         try:
             log(__name__).info('Borrando la tabla ' + tabla)
-        
+
             sql = "DROP TABLE " + tabla
             conn = self.conn()
             conn.execute(sql)
@@ -51,7 +51,7 @@ class MySQL:
         except:
             log(__name__).warning('Error al borrar la tabla ' + tabla)
 
-    def createTable(self,tabla, atributos, describe):  
+    def createTable(self,tabla, atributos, describe):
         try:
             log(__name__).info('Creando tabla ' + tabla)
 
@@ -61,6 +61,9 @@ class MySQL:
                     longitud = atributo['type'].split('(')[1].split(')')[0]
                 else:
                     longitud = atributo['max_lenght']
+
+                if atributo['type'].split('(')[0] == "datetime":
+                    longitud = 6
 
                 if atributo['is_nullable']:
                     nulo = 'NULL'
@@ -91,13 +94,18 @@ class MySQL:
 
             stringAtributos = ','.join(atributos)
             valString = '%s, '*len(registros[0])
-            
+
             sql = "INSERT INTO " + tabla + \
                 ' (' + stringAtributos.lower() + ') VALUES ('+valString[:-2]+') '
 
             conn = self.conn()
             conn.executemany(sql, registros)
-            conn.close()
-        except:
+        except pymysql.Error as e:
+            print("Error %d: %s" % (e.args[0], e.args[1]))
+
             log(__name__).critical('Error al insertar elementos en la tabla ' + tabla)
+
+            return False
+        finally:
+            conn.close()
             sys.exit(1)

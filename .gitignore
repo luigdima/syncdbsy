@@ -1,3 +1,5 @@
 /build/syncdb.env
 /src/csql/init
+/src/csql/init/*
 **/__pycache__
+.env
