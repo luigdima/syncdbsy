@@ -104,8 +104,7 @@ class MySQL:
             print("Error %d: %s" % (e.args[0], e.args[1]))
 
             log(__name__).critical('Error al insertar elementos en la tabla ' + tabla)
-
+            sys.exit(1)
             return False
         finally:
             conn.close()
-            sys.exit(1)

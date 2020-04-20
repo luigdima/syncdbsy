@@ -16,15 +16,18 @@ class MsSQL:
 
             log(__name__).info('Conectado a base de datos MsSQL ' +
                                os.getenv("DB_MSSQL_SERVER"))
+        except:
+            log(__name__).critical('Error al conectar con MsSQL! ' + os.getenv("DB_MSSQL_SERVER"))
+            sys.exit(1)
 
+        try:
             cursor = connection.cursor()
             cursor.execute(sql)
             r = cursor.fetchall()
             connection.close()
             return r
         except:
-            log(__name__).critical('Error al conectar con MsSQL! ' +
-                                os.getenv("DB_MSSQL_SERVER"))
+            log(__name__).critical('Error en consulta SQL de MsSQL: '+sql)
             sys.exit(1)
 
     def select(self, sql):
