@@ -42,7 +42,7 @@ def cargarCSQL():
             atributosConsulta = re.search('SELECT(.*)FROM', contentFileStrip).group(1).split(',')
             atributosConsultaLimpios = []
             for atributoConsulta in atributosConsulta:
-                atributoConsulta = atributoConsulta.split('AS')
+                atributoConsulta = atributoConsulta.split(' AS ')
                 if len(atributoConsulta) == 2:
                     atributosConsultaLimpios.append(atributoConsulta[1].strip())
                 else:
