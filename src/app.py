@@ -18,7 +18,7 @@ def main():
     except:
         log(__name__).info('Creando fichero init!')
         initFile = open(basePath + "/init", "w")
-        importador(quart=True)
+        importador(quart=False)
     finally:
         initFile.close()
 
@@ -37,6 +37,9 @@ def cargarCSQL(quart=False):
         for file in fileNames:
             if os.path.splitext(file)[1] != ".sql":
                 continue
+
+            if file[0] == "_":
+                continue
             
             contentFileStrip = ""
             contentFile = open(basePath +"/"+ file, "r").readlines()
@@ -54,13 +57,19 @@ def cargarCSQL(quart=False):
                     continue
             else:
                 log(__name__).warning('Ciclo normal')
-                continue
+                pass
 
             log(__name__).info('Cargando archivo '+file)
+
+            contentFileStripClear = re.sub('(\/\*.*\*\/ .*?)', '', contentFileStrip)
             
-            atributosConsulta = re.search('SELECT(.*)FROM', contentFileStrip).group(1).split(',')
+            log(__name__).info('Consulta: '+contentFileStripClear)
+            
+            atributosConsulta = re.search('(?<=SELECT)(.*?)(?=FROM)', contentFileStripClear).group().split(', ')
             atributosConsultaLimpios = []
             for atributoConsulta in atributosConsulta:
+                log(__name__).info(atributoConsulta)
+
                 atributoConsulta = atributoConsulta.split(' AS ')
                 if len(atributoConsulta) == 2:
                     atributosConsultaLimpios.append(atributoConsulta[1].strip())
@@ -68,7 +77,7 @@ def cargarCSQL(quart=False):
                     atributosConsultaLimpios.append(atributoConsulta[0].strip())
 
             consultas[file.split(".")[0]] = {
-                "sql_mssql": contentFileStrip,
+                "sql_mssql": contentFileStripClear,
                 "atributos": atributosConsultaLimpios
             }
         break
@@ -100,7 +109,7 @@ def quart():
 if __name__ == '__main__':
     main()
     schedule.every().minutes.do(main)
-    schedule.every(os.getenv("TIMEQUART",15)).minutes.do(quart)
+    schedule.every(int(os.getenv("TIMEQUART",15))).minutes.do(quart)
     schedule.every().day.at(os.getenv("TIMECRON","00:30")).do(importador)
 
 while True:
