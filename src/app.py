@@ -18,11 +18,16 @@ def main():
     except:
         log(__name__).info('Creando fichero init!')
         initFile = open(basePath + "/init", "w")
-        importador()
+        importador(quart=False)
     finally:
         initFile.close()
 
-def cargarCSQL():
+def cargarCSQL(quart=False):
+    if quart:
+        log(__name__).info('quart')
+    else:
+        log(__name__).info('no quart')
+
     log(__name__).info('Cargando archivos SQL...')
 
     basePath = os.getenv("DIRSQL")
@@ -32,16 +37,39 @@ def cargarCSQL():
         for file in fileNames:
             if os.path.splitext(file)[1] != ".sql":
                 continue
+
+            if file[0] == "_":
+                continue
             
             contentFileStrip = ""
             contentFile = open(basePath +"/"+ file, "r").readlines()
 
-            for contentFileLine in contentFile:        
+            for contentFileLine in contentFile: 
                 contentFileStrip = contentFileStrip +" "+ contentFileLine.strip(' ').rstrip("\n")
+            
+            buscaQuart = contentFileStrip.find("/*cada15m*/")
 
-            atributosConsulta = re.search('SELECT(.*)FROM', contentFileStrip).group(1).split(',')
+            if quart:
+                log(__name__).warning('Ciclo quart')
+                if buscaQuart > 0:
+                    pass
+                else:
+                    continue
+            else:
+                log(__name__).warning('Ciclo normal')
+                pass
+
+            log(__name__).info('Cargando archivo '+file)
+
+            contentFileStripClear = re.sub('(\/\*.*\*\/ .*?)', '', contentFileStrip)
+            
+            log(__name__).info('Consulta: '+contentFileStripClear)
+            
+            atributosConsulta = re.search('(?<=SELECT)(.*?)(?=FROM)', contentFileStripClear).group().split(', ')
             atributosConsultaLimpios = []
             for atributoConsulta in atributosConsulta:
+                log(__name__).info(atributoConsulta)
+
                 atributoConsulta = atributoConsulta.split(' AS ')
                 if len(atributoConsulta) == 2:
                     atributosConsultaLimpios.append(atributoConsulta[1].strip())
@@ -49,19 +77,19 @@ def cargarCSQL():
                     atributosConsultaLimpios.append(atributoConsulta[0].strip())
 
             consultas[file.split(".")[0]] = {
-                "sql_mssql": contentFileStrip,
+                "sql_mssql": contentFileStripClear,
                 "atributos": atributosConsultaLimpios
             }
         break
     return consultas
 
-def importador():
+def importador(quart=False):  
     log(__name__).info('Inicializando proceso de replicado...')
 
     callMsSQL = MsSQL()
     callMySQL = MySQL()
 
-    consultas = cargarCSQL()
+    consultas = cargarCSQL(quart)
 
     for consulta in consultas.items():
         consultaMsSQL = callMsSQL.select(consulta[1]['sql_mssql'])
@@ -75,10 +103,14 @@ def importador():
                 describeMsSQL
             )
 
+def quart():
+    importador(quart=True)
+
 if __name__ == '__main__':
     main()
     schedule.every().minutes.do(main)
-    schedule.every().day.at(os.getenv("TIMECRON")).do(importador)
+    schedule.every(int(os.getenv("TIMEQUART",15))).minutes.do(quart)
+    schedule.every().day.at(os.getenv("TIMECRON","00:30")).do(importador)
 
 while True:
     schedule.run_pending()
